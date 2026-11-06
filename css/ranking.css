@@ -1,0 +1,10 @@
+.rank{max-width:900px;margin:0 auto;padding:clamp(24px,5vw,48px) 16px;display:grid;gap:20px}
+.rank-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.rank h1{font-size:clamp(2rem,5vw,2.8rem);font-weight:800}
+.tabela{overflow-x:auto;padding:8px 16px}
+table{width:100%;border-collapse:collapse;min-width:520px}
+th{color:var(--txt2);font-weight:600;text-align:left;padding:12px 8px}
+td{padding:12px 8px;border-top:1px solid var(--borda)}
+tr.p1 td:first-child{box-shadow:inset 4px 0 #FFD447}tr.p2 td:first-child{box-shadow:inset 4px 0 #C9CEDB}tr.p3 td:first-child{box-shadow:inset 4px 0 #CD7F32}
+tr.p1{background:#FFD44714}tr.p2{background:#C9CEDB10}tr.p3{background:#CD7F3214}
+#vazio{text-align:center;padding:40px;color:var(--txt2)}
