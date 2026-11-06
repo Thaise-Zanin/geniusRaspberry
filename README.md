@@ -19,3 +19,4 @@ Em js/api.js: `USAR_MOCK: false`, `BASE_URL` e `WS_URL` com o IP da Raspberry.
 
 ## Organização
 js/api.js (config + API real + simulada) · js/animations.js (acende cores em ordem) · js/main.js (cabeçalho, dashboard) · js/jogo.js (tela de jogo) · js/ranking.js · css/ (um por página + global).
+=======
