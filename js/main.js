@@ -11,7 +11,7 @@ function renderCabecalho() {
   const link = (id, href, t) => `<a href="${raiz}${href}" ${pagina === id ? 'aria-current="page"' : ''}>${t}</a>`;
   $('#topo').innerHTML = `<a class="logo" href="${raiz}index.html" aria-label="Genius, início">GENIUS
     <span><i style="background:var(--verde)"></i><i style="background:var(--vermelho)"></i><i style="background:var(--amarelo)"></i><i style="background:var(--azul)"></i></span></a>
-    <nav>${link('inicio', 'index.html', 'Início')}${link('jogo', 'pages/jogo.html', 'Jogar')}${link('ranking', 'pages/ranking.html', 'Ranking')}</nav>`;
+    <nav>${link('inicio', 'index.html', 'Início')}${link('jogo', 'pages/jogo.html', 'Jogar')}`; //${link('ranking', 'pages/ranking.html', 'Ranking')}</nav>
 }
 
 async function iniciarDashboard() {
