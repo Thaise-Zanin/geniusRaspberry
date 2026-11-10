@@ -1,0 +1,23 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jogar — Genius</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap"><link rel="stylesheet" href="../css/global.css"><link rel="stylesheet" href="../css/jogo.css"></head>
+<body data-pagina="jogo" data-raiz="../">
+<header class="topo" id="topo"></header>
+<main class="jogo">
+<section class="placar" aria-label="Informações da partida">
+<div class="card nivel"><span>Nível</span><strong id="nivel">01</strong></div>
+<div class="card"><span>Pontuação</span><strong id="pontos">0</strong></div>
+<div class="card"><span>Recorde pessoal</span><strong id="recorde">0</strong></div>
+<div class="card"><span>Status</span><strong id="status">Parado</strong></div></section>
+<div class="tabuleiro" id="tabuleiro"><div class="grade">
+<button class="pad" data-cor="verde" aria-label="Verde" tabindex="-1"></button><button class="pad" data-cor="vermelho" aria-label="Vermelho" tabindex="-1"></button>
+<button class="pad" data-cor="amarelo" aria-label="Amarelo" tabindex="-1"></button><button class="pad" data-cor="azul" aria-label="Azul" tabindex="-1"></button></div>
+<div class="centro"><span>Nível</span><b id="centro-nivel">1</b></div></div>
+<p id="mensagem" aria-live="polite">Digite seu nome e comece.</p>
+<div class="progresso"><div class="t"><strong id="prog-nivel">Nível 01</strong><span id="prog-seq">Sequência atual: 0 cores</span></div><div class="barra"><i id="barra"></i></div></div>
+<div class="controles"><input id="nome" maxlength="20" placeholder="Seu nome" aria-label="Seu nome"><button class="btn" id="btn-iniciar">INICIAR JOGO</button></div>
+<p class="aviso" id="aviso" role="alert" hidden></p>
+<p class="aviso info" id="nota-sim" hidden>Modo simulado: na sua vez, clique nas cores para fazer o papel dos botões físicos.</p>
+</main>
+<div class="final" id="final" hidden><div class="card"><h2>Fim de jogo!</h2><div class="num" id="f-pontos">0</div><span>pontos · nível <b id="f-nivel">0</b></span><strong id="f-recorde" hidden style="color:var(--amarelo)">Novo recorde pessoal!</strong>
+<div class="acoes"><button class="btn" id="btn-de-novo">JOGAR DE NOVO</button><a class="btn btn-sec" href="ranking.html">Ver ranking</a></div></div></div>
+<script src="../js/api.js"></script><script src="../js/animations.js"></script><script src="../js/main.js"></script><script src="../js/jogo.js"></script></body></html>

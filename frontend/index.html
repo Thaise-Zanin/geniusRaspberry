@@ -1,0 +1,18 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Genius</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap"><link rel="stylesheet" href="css/global.css"><link rel="stylesheet" href="css/dashboard.css"></head>
+<body data-pagina="inicio" data-raiz="">
+<header class="topo" id="topo"></header>
+<main class="inicio">
+<section class="hero"><div><h1>Teste sua memória!</h1>
+<p>Observe a sequência de cores que pisca na tela e repita a ordem apertando os botões do aparelho. A cada acerto, a sequência cresce.</p>
+<div class="acoes"><input id="nome" maxlength="20" placeholder="Seu nome" aria-label="Seu nome"><a class="btn" id="btn-iniciar" href="pages/jogo.html#iniciar">INICIAR JOGO</a></div></div>
+<div class="tabuleiro" id="demo" aria-hidden="true"><div class="grade"><div class="pad" data-cor="verde"></div><div class="pad" data-cor="vermelho"></div><div class="pad" data-cor="amarelo"></div><div class="pad" data-cor="azul"></div></div><div class="centro"><span>Genius</span></div></div></section>
+<p class="aviso" id="aviso" role="alert" hidden></p>
+<section class="stats" aria-label="Indicadores">
+<div class="card stat" style="--c:var(--azul)"><strong id="s-nivel">…</strong><span>Maior nível alcançado</span></div>
+<div class="card stat" style="--c:var(--verde)"><strong id="s-melhor">…</strong><span>Melhor pontuação pessoal</span></div>
+<div class="card stat" style="--c:var(--amarelo)"><strong id="s-recorde">…</strong><span>Recorde geral</span></div>
+<div class="card stat" style="--c:var(--vermelho)"><strong id="s-partidas">…</strong><span>Partidas realizadas</span></div></section>
+<section class="card"><div class="resumo-topo"><h2>Melhores jogadores</h2><a class="btn btn-sec" href="pages/ranking.html">Ver ranking completo</a></div><div id="top3">Carregando...</div></section>
+</main>
+<script src="js/api.js"></script><script src="js/animations.js"></script><script src="js/main.js"></script></body></html>
