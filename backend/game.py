@@ -174,34 +174,6 @@ def reiniciar_partida(id_partida):
         return partida.copy()
 
 
-def buscar_ranking():
-    with conectar_banco() as conexao:
-        cursor = conexao.execute("""
-            SELECT
-                jogador,
-                MAX(pontuacao) AS melhor_pontuacao,
-                COUNT(*) AS partidas,
-                SUM(CASE WHEN resultado = 'vitoria' THEN 1 ELSE 0 END)
-                    AS vitorias
-            FROM historico
-            GROUP BY jogador
-            ORDER BY melhor_pontuacao DESC, jogador ASC
-            LIMIT 10
-        """)
-
-        resultados = cursor.fetchall()
-
-    return [
-        {
-            "jogador": linha[0],
-            "pontuacao": linha[1],
-            "partidas": linha[2],
-            "vitorias": linha[3]
-        }
-        for linha in resultados
-    ]
-
-
 def buscar_estatisticas(jogador):
     with conectar_banco() as conexao:
         cursor = conexao.execute("""
@@ -230,4 +202,3 @@ def buscar_estatisticas(jogador):
 
 
 criar_tabelas()
-  

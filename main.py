@@ -1,10 +1,12 @@
-
 from gpiozero import LED, Button, Buzzer
 from time import sleep
-from random import choice
-from queue import Queue, Empty
+from threading import Thread, Timer, Lock
+from queue import Queue
+import requests
 
-# LEDs
+API_URL = "http://localhost:8000/hardware/botao"
+TEMPO_LED = 0.2
+
 leds = {
     "Vermelho": LED(17),
     "Amarelo": LED(23),
@@ -12,119 +14,124 @@ leds = {
     "Verde": LED(27)
 }
 
-# Botoes
-botoes = {
-    "Vermelho": Button(19, pull_up=True),
-    "Amarelo": Button(5, pull_up=True),
-    "Azul": Button(6, pull_up=True),
-    "Verde": Button(13, pull_up=True)
-}
-
-# Buzzer
 buzzer = Buzzer(24)
 
-# Fila de botoes
-fila_botoes = Queue()
+botoes = {
+    "Vermelho": Button(19, pull_up=True, bounce_time=0.1),
+    "Amarelo": Button(5, pull_up=True, bounce_time=0.1),
+    "Azul": Button(6, pull_up=True, bounce_time=0.1),
+    "Verde": Button(13, pull_up=True, bounce_time=0.1)
+}
 
-for cor, botao in botoes.items():
-    botao.when_pressed = lambda c=cor: fila_botoes.put(c)
+fila_jogadas = Queue()
+temporizadores_led = {}
+trava_led = Lock()
 
 
-def desligar_tudo():
-    for led in leds.values():
-        led.off()
-    buzzer.off()
+def apagar_led(cor):
+    leds[cor].off()
 
 
-def som_acerto():
+def som_nivel():
     buzzer.on()
-    sleep(0.2)
+    sleep(0.15)
     buzzer.off()
 
 
 def som_erro():
     buzzer.on()
-    sleep(0.8)
+    sleep(0.7)
     buzzer.off()
 
 
-def esperar_jogador():
-    try:
-        return fila_botoes.get(timeout=8)
-    except Empty:
-        return None
+def registrar_botao(cor):
+    print(f"Botão pressionado: {cor}")
+
+    led = leds[cor]
+
+    led.on()
+
+    with trava_led:
+        if cor in temporizadores_led:
+            temporizadores_led[cor].cancel()
+
+        temporizador = Timer(
+            TEMPO_LED,
+            apagar_led,
+            args=[cor]
+        )
+
+        temporizadores_led[cor] = temporizador
+        temporizador.start()
+
+    fila_jogadas.put(cor.lower())
 
 
-def fim_de_jogo(pontos):
-    desligar_tudo()
-    print("\nGAME OVER!")
-    print(f"Sua pontuacao: {pontos}")
-    som_erro()
-
-
-def iniciar_jogo():
-    sequencia = []
-    pontos = 0
-
-    print("JOGO DA MEMORIA")
-    print("Prepare-se!")
-
-    sleep(2)
-
+def enviar_jogadas():
     while True:
-        nova_cor = choice(list(leds.keys()))
-        sequencia.append(nova_cor)
+        cor = fila_jogadas.get()
 
-        print(f"\nRODADA {len(sequencia)}")
+        try:
+            resposta = requests.post(
+                API_URL,
+                json={"cor": cor},
+                timeout=3
+            )
 
-        # A sequencia sera mostrada pelo frontend.
-        # A Raspberry nao acende LEDs nesta etapa.
+            if resposta.ok:
+                dados = resposta.json()
 
-        while not fila_botoes.empty():
-            fila_botoes.get_nowait()
+                print(f"Jogada enviada: {cor}")
 
-        acertou = True
+                if dados.get("resultado") == "nivel_concluido":
+                    print("Nível concluído!")
+                    som_nivel()
 
-        for cor_correta in sequencia:
-            resposta = esperar_jogador()
+                elif dados.get("status") == "derrota":
+                    print("Fim de jogo!")
+                    som_erro()
 
-            if resposta is None:
-                print("Tempo esgotado!")
-                acertou = False
-                break
+            else:
+                print("Erro na API:", resposta.text)
 
-            print(f"Voce apertou: {resposta}")
+        except requests.RequestException as erro:
+            print("Erro de conexão:", erro)
 
-            if resposta != cor_correta:
-                print("Resposta incorreta!")
-                acertou = False
-                break
+        finally:
+            fila_jogadas.task_done()
 
-        if acertou:
-            pontos += 1
-            print(f"Nivel {pontos} concluido!")
-            som_acerto()
-            sleep(1)
-        else:
-            fim_de_jogo(pontos)
-            break
+
+Thread(target=enviar_jogadas, daemon=True).start()
+
+
+for cor, botao in botoes.items():
+    botao.when_pressed = lambda c=cor: registrar_botao(c)
+
+
+print("Hardware Genius conectado!")
+print("Aguardando botões...")
 
 
 try:
-    iniciar_jogo()
+    while True:
+        sleep(1)
 
 except KeyboardInterrupt:
-    print("\nJogo encerrado!")
+    print("\nEncerrando hardware...")
 
 finally:
-    desligar_tudo()
+    with trava_led:
+        for temporizador in temporizadores_led.values():
+            temporizador.cancel()
 
     for led in leds.values():
+        led.off()
         led.close()
 
     for botao in botoes.values():
         botao.close()
 
+    buzzer.off()
     buzzer.close()
 
-    print("Componentes desligados.")
+    print("Hardware desligado.")

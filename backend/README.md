@@ -43,5 +43,4 @@ Com o servidor iniciado, acesse:
 | GET | `/partida/{id_partida}` | Consultar partida |
 | POST | `/partida/{id_partida}/jogar` | Enviar jogada |
 | POST | `/partida/{id_partida}/reiniciar` | Reiniciar partida |
-| GET | `/ranking` | Consultar ranking |
 | GET | `/estatisticas` | Consultar estatísticas |
