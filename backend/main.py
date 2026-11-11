@@ -28,7 +28,7 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-TEMPO_RESPOSTA = 8
+TEMPO_RESPOSTA = 60
 TEMPO_PREPARACAO = 1
 TEMPO_COR_MS = 600
 INTERVALO_MS = 250

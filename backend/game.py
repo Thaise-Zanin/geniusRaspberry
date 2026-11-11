@@ -2,9 +2,14 @@ import random
 import uuid
 import sqlite3
 
+
 from pathlib import Path
 from threading import Lock
 from datetime import datetime, timezone
+from .redis_cache import (
+    salvar_partida as salvar_no_redis,
+    buscar_partida as buscar_no_redis
+)
 
 
 CORES = ["vermelho", "azul", "verde", "amarelo"]
@@ -76,17 +81,34 @@ def iniciar_partida(jogador="Anônimo"):
     with trava:
         partidas[id_partida] = partida
 
+    # Salva a partida também no Redis
+    salvar_no_redis(partida)
+
     return partida.copy()
 
 
 def buscar_partida(id_partida):
+
+    # Primeiro tenta encontrar no Redis
+    partida_cache = buscar_no_redis(id_partida)
+
+    if partida_cache is not None:
+        return partida_cache
+
+    # Se não encontrar no Redis, procura na memória
     with trava:
         partida = partidas.get(id_partida)
 
         if partida is None:
             return None
 
-        return partida.copy()
+        partida = partida.copy()
+
+    # Atualiza o Redis com os dados encontrados
+    salvar_no_redis(partida)
+
+    return partida
+
 
 
 def validar_jogada(id_partida, cor):
@@ -104,11 +126,17 @@ def validar_jogada(id_partida, cor):
 
         indice = partida["indice_resposta"]
 
+        # Se a cor estiver errada
         if cor != partida["sequencia"][indice]:
             partida["status"] = "derrota"
             registrar_resultado(partida, "derrota")
+
+            # Atualiza o Redis
+            salvar_no_redis(partida)
+
             return partida.copy()
 
+        # Se a cor estiver correta
         partida["indice_resposta"] += 1
 
         if partida["indice_resposta"] == len(partida["sequencia"]):
@@ -121,15 +149,22 @@ def validar_jogada(id_partida, cor):
             partida["sequencia"].append(random.choice(CORES))
             partida["indice_resposta"] = 0
 
+            # Atualiza o Redis
+            salvar_no_redis(partida)
+
             return {
                 **partida.copy(),
                 "resultado": "nivel_concluido"
             }
 
+        # Atualiza o Redis após uma resposta correta
+        salvar_no_redis(partida)
+
         return {
             **partida.copy(),
             "resultado": "correta"
         }
+
 
 
 def encerrar_por_tempo(id_partida):
@@ -145,7 +180,12 @@ def encerrar_por_tempo(id_partida):
         partida["status"] = "derrota"
         registrar_resultado(partida, "derrota")
 
+        # Atualiza o Redis
+        salvar_no_redis(partida)
+
         return partida.copy()
+
+
 
 
 def reiniciar_partida(id_partida):
@@ -171,7 +211,11 @@ def reiniciar_partida(id_partida):
 
         partidas[id_partida] = partida
 
+        # Atualiza o Redis com a partida reiniciada
+        salvar_no_redis(partida)
+
         return partida.copy()
+
 
 
 def buscar_estatisticas(jogador):

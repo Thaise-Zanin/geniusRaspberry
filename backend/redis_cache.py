@@ -10,19 +10,15 @@ conexao = redis.Redis(
 )
 
 
-# Salvar uma partida no Redis
-def salvar_partida(id_partida, sequencia, nivel, pontuacao):
+# Salvar a partida completa no Redis
+def salvar_partida(partida):
 
-    chave = f"partida:{id_partida}"
+    chave = f"partida:{partida['id']}"
 
-    dados = {
-        "sequencia": sequencia,
-        "nivel": nivel,
-        "pontuacao": pontuacao
-    }
+    dados = json.dumps(partida)
 
-    # Salva os dados com validade de 300 segundos (5 minutos)
-    conexao.setex(chave, 300, json.dumps(dados))
+    # A partida fica salva por 300 segundos (5 minutos)
+    conexao.setex(chave, 300, dados)
 
     print("Partida salva no Redis!")
 
@@ -43,7 +39,7 @@ def buscar_partida(id_partida):
     return json.loads(dados)
 
 
-# Consultar o tempo restante da partida
+# Consultar o tempo restante
 def consultar_ttl(id_partida):
 
     chave = f"partida:{id_partida}"
