@@ -14,13 +14,14 @@ from .game import (
 
 from .models import Jogada, NovoJogador
 
-
+# Configura as informações principais da API
 app = FastAPI(
     title="Genius API",
     description="API para gerenciamento do jogo Genius",
     version="1.0.0"
 )
 
+# Permite a comunicação entre a API e o frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,26 +29,28 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+# Define os tempos utilizados durante as rodadas
 TEMPO_RESPOSTA = 60
 TEMPO_PREPARACAO = 1
 TEMPO_COR_MS = 600
 INTERVALO_MS = 250
 
+# Armazena as conexões WebSocket e a partida ativa
 conexoes = []
 partida_ativa = None
 temporizadores = {}
 
-
+# Adiciona uma nova conexão WebSocket
 async def conectar_websocket(websocket: WebSocket):
     await websocket.accept()
     conexoes.append(websocket)
 
-
+# Remove uma conexão WebSocket
 def desconectar_websocket(websocket: WebSocket):
     if websocket in conexoes:
         conexoes.remove(websocket)
 
-
+# Envia uma atualização para todos os clientes conectados
 async def transmitir(evento):
     desconectados = []
 
@@ -60,7 +63,7 @@ async def transmitir(evento):
     for conexao in desconectados:
         desconectar_websocket(conexao)
 
-
+# Mantém a conexão WebSocket aberta para receber mensagens
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await conectar_websocket(websocket)
@@ -71,14 +74,14 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         desconectar_websocket(websocket)
 
-
+# Cancela o temporizador de uma partida
 def cancelar_temporizador(id_partida):
     tarefa = temporizadores.pop(id_partida, None)
 
     if tarefa and not tarefa.done():
         tarefa.cancel()
 
-
+# Inicia a contagem do tempo para o jogador responder
 def iniciar_temporizador(id_partida, tempo=TEMPO_RESPOSTA):
     cancelar_temporizador(id_partida)
 
@@ -86,7 +89,7 @@ def iniciar_temporizador(id_partida, tempo=TEMPO_RESPOSTA):
         verificar_tempo(id_partida, tempo)
     )
 
-
+# Verifica se o jogador respondeu dentro do tempo permitido
 async def verificar_tempo(id_partida, tempo):
     tarefa_atual = asyncio.current_task()
 
@@ -102,7 +105,8 @@ async def verificar_tempo(id_partida, tempo):
 
         if resultado is None:
             return
-
+        
+        # Avisa os clientes que o tempo acabou
         await transmitir({
             "tipo": "fim",
             "nivel": resultado["nivel"],
@@ -116,7 +120,7 @@ async def verificar_tempo(id_partida, tempo):
         if temporizadores.get(id_partida) is tarefa_atual:
             temporizadores.pop(id_partida, None)
 
-
+# Envia a sequência de cores para os clientes conectados
 async def enviar_sequencia(partida):
     await transmitir({
         "tipo": "sequencia",
@@ -125,18 +129,20 @@ async def enviar_sequencia(partida):
         "sequencia": partida["sequencia"]
     })
 
+    # Calcula o tempo necessário para exibir toda a sequência
     tempo_exibicao = (
         TEMPO_PREPARACAO
         + len(partida["sequencia"])
         * (TEMPO_COR_MS + INTERVALO_MS) / 1000
     )
 
+    # Inicia o tempo de resposta depois da exibição
     iniciar_temporizador(
         partida["id"],
         tempo_exibicao + TEMPO_RESPOSTA
     )
 
-
+# Rota inicial e verificação do servidor
 @app.get("/")
 def inicio():
     return {
@@ -150,6 +156,7 @@ def health():
     return {"status": "online"}
 
 
+# Cria uma nova partida e envia a primeira sequência
 @app.post("/partida/iniciar")
 @app.post("/partidas")
 async def criar_partida(dados: NovoJogador | None = None):
@@ -160,6 +167,7 @@ async def criar_partida(dados: NovoJogador | None = None):
     if not nome:
         nome = "Jogador"
 
+    # Cancela o temporizador da partida anterior, se existir
     if partida_ativa:
         cancelar_temporizador(partida_ativa)
 
@@ -170,7 +178,7 @@ async def criar_partida(dados: NovoJogador | None = None):
 
     return partida
 
-
+# Consulta os dados de uma partida pelo identificador
 @app.get("/partida/{id_partida}")
 def consultar_partida(id_partida: str):
     partida = buscar_partida(id_partida)
@@ -183,7 +191,7 @@ def consultar_partida(id_partida: str):
 
     return partida
 
-
+# Consulta a sequência atual e o tempo dos LEDs
 @app.get("/partida/{id_partida}/sequencia")
 def consultar_sequencia(id_partida: str):
     partida = buscar_partida(id_partida)
@@ -200,7 +208,7 @@ def consultar_sequencia(id_partida: str):
         "tempo_led_ms": partida["tempo_led_ms"]
     }
 
-
+# Processa e valida uma jogada enviada pelo jogador ou hardware
 async def processar_jogada(id_partida, cor):
     partida_anterior = buscar_partida(id_partida)
 
@@ -230,12 +238,14 @@ async def processar_jogada(id_partida, cor):
             detail=resultado["erro"]
         )
 
+    # Informa qual botão foi pressionado e se a resposta estava correta
     await transmitir({
         "tipo": "botao",
         "cor": cor,
         "correto": resultado["status"] != "derrota"
     })
 
+    # Encerra o temporizador e avisa quando o jogador perde
     if resultado["status"] == "derrota":
         cancelar_temporizador(id_partida)
 
@@ -245,6 +255,7 @@ async def processar_jogada(id_partida, cor):
             "pontuacao": resultado["pontuacao"]
         })
 
+    # Envia uma nova sequência quando o jogador conclui o nível
     elif resultado.get("resultado") == "nivel_concluido":
         cancelar_temporizador(id_partida)
 
@@ -254,6 +265,7 @@ async def processar_jogada(id_partida, cor):
             "pontuacao": resultado["pontuacao"]
         })
 
+        # Aguarda um pouco antes de iniciar a próxima rodada
         async def proxima_rodada():
             await asyncio.sleep(1.5)
 
@@ -265,16 +277,17 @@ async def processar_jogada(id_partida, cor):
         asyncio.create_task(proxima_rodada())
 
     else:
+        # Reinicia a contagem após uma resposta correta
         iniciar_temporizador(id_partida)
 
     return resultado
 
-
+# Recebe uma jogada enviada pela API
 @app.post("/partida/{id_partida}/jogar")
 async def jogar(id_partida: str, jogada: Jogada):
     return await processar_jogada(id_partida, jogada.cor)
 
-
+# Recebe as cores enviadas pelos botões físicos da Raspberry Pi
 @app.post("/hardware/botao")
 async def receber_botao(jogada: Jogada):
     if not partida_ativa:
@@ -288,7 +301,7 @@ async def receber_botao(jogada: Jogada):
         jogada.cor.lower()
     )
 
-
+# Reinicia uma partida e envia uma nova sequência
 @app.post("/partida/{id_partida}/reiniciar")
 async def reiniciar(id_partida: str):
     partida = reiniciar_partida(id_partida)
@@ -305,7 +318,7 @@ async def reiniciar(id_partida: str):
 
     return partida
 
-
+# Consulta as estatísticas de um jogador
 @app.get("/estatisticas")
 def estatisticas(jogador: str):
     nome = jogador.strip()

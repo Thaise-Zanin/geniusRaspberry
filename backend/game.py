@@ -11,19 +11,21 @@ from .redis_cache import (
     buscar_partida as buscar_no_redis
 )
 
-
+# Cores disponíveis no jogo
 CORES = ["vermelho", "azul", "verde", "amarelo"]
 
+# Armazena as partidas enquanto o servidor está em execução
 partidas = {}
 trava = Lock()
 
+# Define o caminho do banco de dados
 BANCO = Path(__file__).with_name("genius.db")
 
-
+# Cria a conexão com o banco de dados
 def conectar_banco():
     return sqlite3.connect(BANCO)
 
-
+# Cria a tabela para guardar o histórico das partidas
 def criar_tabelas():
     with conectar_banco() as conexao:
         conexao.execute("""
@@ -37,12 +39,12 @@ def criar_tabelas():
             )
         """)
 
-
+# Calcula o tempo de exibição dos LEDs conforme o nível
 def calcular_tempo_led(nivel):
     tempo = 800 - (nivel - 1) * 50
     return max(250, tempo)
 
-
+# Registra o resultado da partida no banco de dados
 def registrar_resultado(partida, resultado):
     if partida.get("registrada"):
         return
@@ -62,7 +64,7 @@ def registrar_resultado(partida, resultado):
 
     partida["registrada"] = True
 
-
+# Cria uma nova partida com sequência e pontuação inicial
 def iniciar_partida(jogador="Anônimo"):
     id_partida = str(uuid.uuid4())
 
@@ -86,7 +88,7 @@ def iniciar_partida(jogador="Anônimo"):
 
     return partida.copy()
 
-
+# Busca uma partida primeiro no Redis e depois na memória
 def buscar_partida(id_partida):
 
     # Primeiro tenta encontrar no Redis
@@ -110,7 +112,7 @@ def buscar_partida(id_partida):
     return partida
 
 
-
+# Verifica se a cor escolhida pelo jogador está correta
 def validar_jogada(id_partida, cor):
     with trava:
         partida = partidas.get(id_partida)
@@ -166,7 +168,7 @@ def validar_jogada(id_partida, cor):
         }
 
 
-
+# Encerra a partida quando o tempo acaba
 def encerrar_por_tempo(id_partida):
     with trava:
         partida = partidas.get(id_partida)
@@ -185,9 +187,7 @@ def encerrar_por_tempo(id_partida):
 
         return partida.copy()
 
-
-
-
+# Reinicia uma partida, voltando ao nível inicial
 def reiniciar_partida(id_partida):
     with trava:
         partida_antiga = partidas.get(id_partida)
@@ -217,7 +217,7 @@ def reiniciar_partida(id_partida):
         return partida.copy()
 
 
-
+# Busca as estatísticas do jogador no histórico
 def buscar_estatisticas(jogador):
     with conectar_banco() as conexao:
         cursor = conexao.execute("""
@@ -244,5 +244,5 @@ def buscar_estatisticas(jogador):
         "maior_nivel": dados[5]
     }
 
-
+# Cria a tabela do histórico quando o módulo é iniciado
 criar_tabelas()
