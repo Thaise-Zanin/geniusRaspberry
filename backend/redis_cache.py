@@ -10,7 +10,7 @@ conexao = redis.Redis(
 )
 
 
-# Salvar a partida completa no Redis
+# Salvando a partida completa no Redis
 def salvar_partida(partida):
 
     chave = f"partida:{partida['id']}"
@@ -23,7 +23,7 @@ def salvar_partida(partida):
     print("Partida salva no Redis!")
 
 
-# Buscar uma partida no Redis
+# Buscando uma partida no Redis
 def buscar_partida(id_partida):
 
     chave = f"partida:{id_partida}"
@@ -39,7 +39,7 @@ def buscar_partida(id_partida):
     return json.loads(dados)
 
 
-# Consultar o tempo restante
+# Consultando o tempo restante
 def consultar_ttl(id_partida):
 
     chave = f"partida:{id_partida}"
@@ -51,7 +51,7 @@ def consultar_ttl(id_partida):
     return tempo
 
 
-# Excluir uma partida
+# Excluindo uma partida
 def excluir_partida(id_partida):
 
     chave = f"partida:{id_partida}"
