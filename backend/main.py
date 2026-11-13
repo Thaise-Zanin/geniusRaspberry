@@ -50,7 +50,7 @@ def desconectar_websocket(websocket: WebSocket):
     if websocket in conexoes:
         conexoes.remove(websocket)
 
-# Envia uma atualização para todos os clientes conectados
+# Envia uma atualização para todos os jogadores conectados
 async def transmitir(evento):
     desconectados = []
 
@@ -120,7 +120,7 @@ async def verificar_tempo(id_partida, tempo):
         if temporizadores.get(id_partida) is tarefa_atual:
             temporizadores.pop(id_partida, None)
 
-# Envia a sequência de cores para os clientes conectados
+# Envia a sequência de cores para os jogadores conectados
 async def enviar_sequencia(partida):
     await transmitir({
         "tipo": "sequencia",
